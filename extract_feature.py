@@ -7,15 +7,28 @@ class FakeModule(types.ModuleType):
         if fullname in sys.modules:
             return sys.modules[fullname]
         module = FakeModule(fullname)
+        module.__path__ = []  # make it behave like a package
         sys.modules[fullname] = module
         return module
 
-# Create root module
+# Create root package
 fake_fairseq = FakeModule("fairseq")
+fake_fairseq.__path__ = []  # mark as package
 sys.modules["fairseq"] = fake_fairseq
 
-# 🔥 CRITICAL: also register as package
-fake_fairseq.__path__ = []
+# 🔥 Pre-register common submodules used by fairseq checkpoints
+submodules = [
+    "fairseq.data",
+    "fairseq.tasks",
+    "fairseq.models",
+    "fairseq.modules",
+    "fairseq.criterions",
+]
+
+for name in submodules:
+    module = FakeModule(name)
+    module.__path__ = []
+    sys.modules[name] = module
 
 import os
 import random
