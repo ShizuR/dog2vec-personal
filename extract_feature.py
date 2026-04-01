@@ -12,6 +12,7 @@ import torch.nn.functional as F
 import fairseq.data.dictionary
 import argparse
 import soundfile
+import torchaudio
 
 torch.serialization.add_safe_globals([
     fairseq.data.dictionary.Dictionary
