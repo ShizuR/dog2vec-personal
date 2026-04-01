@@ -10,6 +10,8 @@ import torch
 import torch.nn.functional as F
 
 import fairseq.data.dictionary
+import argparse
+import torchaudio
 
 torch.serialization.add_safe_globals([
     fairseq.data.dictionary.Dictionary
@@ -65,8 +67,28 @@ class FeatureExtractor:
 if __name__ == '__main__':
     model_path = '/kaggle/input/models/shizurai/dog2vec/pytorch/default/1/dog2vec_130k_9.pt'
     extractor = FeatureExtractor(model_path)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--audioPath', type=str, required=True)
+    args = parser.parse_args()
 
-    audio = torch.rand((1, 160000))
+    # Load audio
+    waveform, sample_rate = torchaudio.load(args.audioPath)
+
+    # Convert to mono
+    if waveform.shape[0] > 1:
+        waveform = waveform.mean(dim=0, keepdim=True)
+
+    # Resample to 16kHz
+    if sample_rate != 16000:
+        resampler = torchaudio.transforms.Resample(sample_rate, 16000)
+        waveform = resampler(waveform)
+
+    # Normalize
+    waveform = waveform / waveform.abs().max()
+
+    # Shape: (T,)
+    audio = waveform.squeeze(0)
+
     feat = extractor.extract(audio)
     print(feat.shape)
     print(feat)
