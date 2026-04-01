@@ -80,7 +80,7 @@ if __name__ == '__main__':
 
     # Convert to mono
     if audio.shape[0] > 1:
-        audio = waveform.mean(dim=0, keepdim=True)
+        audio = audio.mean(dim=0, keepdim=True)
 
     # Resample to 16kHz
     if sample_rate != 16000:
