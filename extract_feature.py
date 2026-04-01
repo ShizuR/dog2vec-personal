@@ -4,10 +4,16 @@ import os.path
 import random
 
 import fairseq
+
 import numpy as np
 import torch
 import torch.nn.functional as F
 
+import fairseq.data.dictionary
+
+torch.serialization.add_safe_globals([
+    fairseq.data.dictionary.Dictionary
+])
 
 def set_seed(seed):
     torch.manual_seed(seed)
