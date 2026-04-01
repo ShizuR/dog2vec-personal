@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 import fairseq.data.dictionary
 import argparse
-import torchaudio
+import soundfile
 
 torch.serialization.add_safe_globals([
     fairseq.data.dictionary.Dictionary
@@ -72,8 +72,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Load audio
-    torchaudio.set_audio_backend("soundfile")
-    waveform, sample_rate = torchaudio.load(args.audioPath)
+    waveform, sample_rate = soundfile.load(args.audioPath)
 
     # Convert to mono
     if waveform.shape[0] > 1:
