@@ -1,6 +1,4 @@
 import os
-import os.path
-import os.path
 import random
 
 import fairseq
@@ -72,28 +70,22 @@ if __name__ == '__main__':
     parser.add_argument('--audioPath', type=str, required=True)
     args = parser.parse_args()
 
-    # Load audio
     waveform, sample_rate = soundfile.read(args.audioPath)
 
-    # convert to torch tensor
     audio = torch.tensor(waveform, dtype=torch.float32)
 
-    # Convert to mono
-    if audio.shape[0] > 1:
-        audio = audio.mean(dim=0, keepdim=True)
+    # Convert to mono safely
+    if len(audio.shape) == 2:
+        audio = audio.mean(dim=1)
 
     # Resample to 16kHz
     if sample_rate != 16000:
         resampler = torchaudio.transforms.Resample(sample_rate, 16000)
-        audio = resampler(audio)
+        audio = resampler(audio.unsqueeze(0)).squeeze(0)
 
-    # Normalize
-    audio = audio / audio.abs().max()
+    # Normalize safely
+    if audio.abs().max() > 0:
+        audio = audio / audio.abs().max()
 
-    # Shape: (T,)
-    print(type(audio))
-    print(audio)
-
-    feat = extractor.extract(audio)
-    print(feat.shape)
-    print(feat)
+    print("Final audio shape:", audio.shape)
+    print("First few samples:", audio[:10])
