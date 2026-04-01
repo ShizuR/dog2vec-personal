@@ -1,42 +1,13 @@
-import sys
-import types
-
-class FakeModule(types.ModuleType):
-    def __getattr__(self, name):
-        fullname = f"{self.__name__}.{name}"
-        if fullname in sys.modules:
-            return sys.modules[fullname]
-        module = FakeModule(fullname)
-        module.__path__ = []  # make it behave like a package
-        sys.modules[fullname] = module
-        return module
-
-# Create root package
-fake_fairseq = FakeModule("fairseq")
-fake_fairseq.__path__ = []  # mark as package
-sys.modules["fairseq"] = fake_fairseq
-
-# 🔥 Pre-register common submodules used by fairseq checkpoints
-submodules = [
-    "fairseq.data",
-    "fairseq.tasks",
-    "fairseq.models",
-    "fairseq.modules",
-    "fairseq.criterions",
-    "fairseq.data.dictionary"
-]
-
-for name in submodules:
-    module = FakeModule(name)
-    module.__path__ = []
-    sys.modules[name] = module
-
 import os
+import os.path
+import os.path
 import random
-#import fairseq
+
+import fairseq
 import numpy as np
 import torch
 import torch.nn.functional as F
+
 
 def set_seed(seed):
     torch.manual_seed(seed)
@@ -48,10 +19,6 @@ def set_seed(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-class DummyTask:
-    class Cfg:
-        normalize = True  # matches fairseq default behavior
-    cfg = Cfg()
 
 class FeatureExtractor:
     def __init__(self, model_path, device="cuda", max_chunk=1600000, layer=9):
@@ -60,28 +27,37 @@ class FeatureExtractor:
         self.device = torch.device(device)
         self.max_chunk = max_chunk
 
-        checkpoint = torch.load(
-            model_path,
-            map_location=self.device,
-            weights_only=False
-        )
+        (
+            model,
+            cfg,
+            task,
+        ) = fairseq.checkpoint_utils.load_model_ensemble_and_task([model_path])
+        self.encoder = model[0].eval().to(self.device)
+        self.task = task
 
-        if "model" in checkpoint:
-            model = checkpoint["model"]
-        elif "models" in checkpoint:
-            model = checkpoint["models"][0]
-        else:
-            model = checkpoint
+    def extract(self, audio):
+        x = audio.to(self.device)
+        with torch.no_grad():
+            if self.task.cfg.normalize:
+                x = F.layer_norm(x, x.shape)
+            x = x.view(1, -1)
 
-        if hasattr(model, "extract_features"):
-            self.encoder = model.eval().to(self.device)
-        else:
-            raise RuntimeError("Model still requires full fairseq implementation")
+            feat = []
+            for start in range(0, x.size(1), self.max_chunk):
+                x_chunk = x[:, start: start + self.max_chunk]
+                feat_chunk, _ = self.encoder.extract_features(
+                    source=x_chunk,
+                    padding_mask=None,
+                    mask=False,
+                    output_layer=self.layer,
+                )
+                feat.append(feat_chunk)
+        feat = torch.cat(feat, 1).squeeze(0)
+        return feat
 
-        self.task = DummyTask()
 
 if __name__ == '__main__':
-    model_path = ''
+    model_path = '/kaggle/input/models/shizurai/dog2vec/pytorch/default/1/dog2vec_130k_9.pt'
     extractor = FeatureExtractor(model_path)
 
     audio = torch.rand((1, 160000))
