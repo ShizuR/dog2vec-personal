@@ -91,10 +91,9 @@ if __name__ == '__main__':
     audio = audio / audio.abs().max()
 
     # Shape: (T,)
-    final = audio.squeeze(0)
-    print(type(waveform))
-    print(waveform)
+    print(type(audio))
+    print(audio)
 
-    feat = extractor.extract(final)
+    feat = extractor.extract(audio)
     print(feat.shape)
     print(feat)
