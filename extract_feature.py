@@ -1,11 +1,25 @@
 import os
 import random
-
 #import fairseq
 import numpy as np
 import torch
 import torch.nn.functional as F
+import sys
+import types
 
+# Create fake fairseq module hierarchy
+fairseq = types.ModuleType("fairseq")
+sys.modules["fairseq"] = fairseq
+
+# Add submodules that might be referenced
+fairseq.models = types.ModuleType("fairseq.models")
+sys.modules["fairseq.models"] = fairseq.models
+
+fairseq.modules = types.ModuleType("fairseq.modules")
+sys.modules["fairseq.modules"] = fairseq.modules
+
+fairseq.tasks = types.ModuleType("fairseq.tasks")
+sys.modules["fairseq.tasks"] = fairseq.tasks
 
 def set_seed(seed):
     torch.manual_seed(seed)
@@ -30,13 +44,20 @@ class FeatureExtractor:
         self.device = torch.device(device)
         self.max_chunk = max_chunk
 
+        # 🔥 FAKE FAIRSEQ BEFORE LOAD
+        import sys, types
+        fairseq = types.ModuleType("fairseq")
+        sys.modules["fairseq"] = fairseq
+        sys.modules["fairseq.models"] = types.ModuleType("fairseq.models")
+        sys.modules["fairseq.modules"] = types.ModuleType("fairseq.modules")
+        sys.modules["fairseq.tasks"] = types.ModuleType("fairseq.tasks")
+
         checkpoint = torch.load(
             model_path,
             map_location=self.device,
-            weights_only=False  # critical fix
+            weights_only=False
         )
 
-        # Try common checkpoint structures
         if "model" in checkpoint:
             model = checkpoint["model"]
         elif "models" in checkpoint:
@@ -44,14 +65,10 @@ class FeatureExtractor:
         else:
             model = checkpoint
 
-        # If model is a state_dict, this will fail → handled below
         if hasattr(model, "extract_features"):
             self.encoder = model.eval().to(self.device)
         else:
-            raise RuntimeError(
-                "Checkpoint does not contain a loaded model object. "
-                "It likely requires fairseq architecture."
-            )
+            raise RuntimeError("Model still requires full fairseq implementation")
 
         self.task = DummyTask()
 
