@@ -7,19 +7,12 @@ import torch.nn.functional as F
 import sys
 import types
 
-# Create fake fairseq module hierarchy
-fairseq = types.ModuleType("fairseq")
-sys.modules["fairseq"] = fairseq
-
-# Add submodules that might be referenced
-fairseq.models = types.ModuleType("fairseq.models")
-sys.modules["fairseq.models"] = fairseq.models
-
-fairseq.modules = types.ModuleType("fairseq.modules")
-sys.modules["fairseq.modules"] = fairseq.modules
-
-fairseq.tasks = types.ModuleType("fairseq.tasks")
-sys.modules["fairseq.tasks"] = fairseq.tasks
+class FakeModule(types.ModuleType):
+    def __getattr__(self, name):
+        fullname = f"{self.__name__}.{name}"
+        module = FakeModule(fullname)
+        sys.modules[fullname] = module
+        return module
 
 def set_seed(seed):
     torch.manual_seed(seed)
@@ -30,7 +23,6 @@ def set_seed(seed):
     os.environ['PYTHONHASHSEED'] = str(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-import torch
 
 class DummyTask:
     class Cfg:
@@ -43,14 +35,6 @@ class FeatureExtractor:
         self.layer = layer
         self.device = torch.device(device)
         self.max_chunk = max_chunk
-
-        # 🔥 FAKE FAIRSEQ BEFORE LOAD
-        import sys, types
-        fairseq = types.ModuleType("fairseq")
-        sys.modules["fairseq"] = fairseq
-        sys.modules["fairseq.models"] = types.ModuleType("fairseq.models")
-        sys.modules["fairseq.modules"] = types.ModuleType("fairseq.modules")
-        sys.modules["fairseq.tasks"] = types.ModuleType("fairseq.tasks")
 
         checkpoint = torch.load(
             model_path,
