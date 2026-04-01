@@ -75,5 +75,4 @@ if __name__ == '__main__':
     audio = torch.tensor(waveform, dtype=torch.float32)
 
     feat = extractor.extract(audio)
-    print(feat.shape)
-    print(feat)
+    torch.save(feat, "/kaggle/working/tensorAudios/feat.pt")
