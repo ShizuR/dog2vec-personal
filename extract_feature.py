@@ -1,18 +1,28 @@
-import os
-import random
-#import fairseq
-import numpy as np
-import torch
-import torch.nn.functional as F
 import sys
 import types
 
 class FakeModule(types.ModuleType):
     def __getattr__(self, name):
         fullname = f"{self.__name__}.{name}"
+        if fullname in sys.modules:
+            return sys.modules[fullname]
         module = FakeModule(fullname)
         sys.modules[fullname] = module
         return module
+
+# Create root module
+fake_fairseq = FakeModule("fairseq")
+sys.modules["fairseq"] = fake_fairseq
+
+# 🔥 CRITICAL: also register as package
+fake_fairseq.__path__ = []
+
+import os
+import random
+#import fairseq
+import numpy as np
+import torch
+import torch.nn.functional as F
 
 def set_seed(seed):
     torch.manual_seed(seed)
