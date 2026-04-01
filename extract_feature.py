@@ -72,6 +72,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Load audio
+    torchaudio.set_audio_backend("soundfile")
     waveform, sample_rate = torchaudio.load(args.audioPath)
 
     # Convert to mono
