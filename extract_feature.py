@@ -75,17 +75,18 @@ if __name__ == '__main__':
     audio = torch.tensor(waveform, dtype=torch.float32)
 
     # Convert to mono safely
-    if len(audio.shape) == 2:
-        audio = audio.mean(dim=1)
+    #if len(audio.shape) == 2:
+    #    audio = audio.mean(dim=1)
 
     # Resample to 16kHz
-    if sample_rate != 16000:
-        resampler = torchaudio.transforms.Resample(sample_rate, 16000)
-        audio = resampler(audio.unsqueeze(0)).squeeze(0)
+    #if sample_rate != 16000:
+    #    resampler = torchaudio.transforms.Resample(sample_rate, 16000)
+    #    audio = resampler(audio.unsqueeze(0)).squeeze(0)
 
     # Normalize safely
-    if audio.abs().max() > 0:
-        audio = audio / audio.abs().max()
+    #if audio.abs().max() > 0:
+    #    audio = audio / audio.abs().max()
 
-    print("Final audio shape:", audio.shape)
-    print("First few samples:", audio[:10])
+    feat = extractor.extract(audio)
+    print(feat.shape)
+    print(feat)
