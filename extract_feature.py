@@ -23,6 +23,7 @@ submodules = [
     "fairseq.models",
     "fairseq.modules",
     "fairseq.criterions",
+    "fairseq.data.dictionary"
 ]
 
 for name in submodules:
