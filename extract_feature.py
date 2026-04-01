@@ -73,7 +73,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Load audio
-    waveform, sample_rate = soundfile.load(args.audioPath)
+    waveform, sample_rate = soundfile.read(args.audioPath)
 
     # Convert to mono
     if waveform.shape[0] > 1:
