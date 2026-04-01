@@ -92,7 +92,9 @@ if __name__ == '__main__':
 
     # Shape: (T,)
     final = audio.squeeze(0)
-
+    print("Audio shape:", final.shape)
+    print("Audio length:", final.shape[0])
+    
     feat = extractor.extract(final)
     print(feat.shape)
     print(feat)
