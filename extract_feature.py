@@ -11,6 +11,7 @@ import fairseq.data.dictionary
 import argparse
 import soundfile
 import torchaudio
+import os
 
 torch.serialization.add_safe_globals([
     fairseq.data.dictionary.Dictionary
@@ -73,6 +74,9 @@ if __name__ == '__main__':
     #convert audio to tensor
     waveform, sample_rate = soundfile.read(args.audioPath)
     audio = torch.tensor(waveform, dtype=torch.float32)
-
+    
+    # get the name of file for recognition
+    name = os.path.basename(args.audioPath)
+    name = name[:-4]
     feat = extractor.extract(audio)
-    torch.save(feat, "/kaggle/working/tensorAudios/feat.pt")
+    torch.save(feat, "/kaggle/working/tensorAudios/"+ name +".pt")
