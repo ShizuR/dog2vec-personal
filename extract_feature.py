@@ -73,10 +73,10 @@ if __name__ == '__main__':
 
     #convert audio to tensor
     waveform, sample_rate = soundfile.read(args.audioPath)
-    waveform = torch.tensor(waveform)
     # resample to 16khz as required by yamnet
     if sample_rate != 16000:
-        audio = librosa.resample(waveform, orig_sr=sample_rate, target_sr=16000)
+        waveform = librosa.resample(waveform, orig_sr=sample_rate, target_sr=16000)
+    audio = torch.tensor(waveform)
     
     # get the name of file for recognition
     name = os.path.basename(args.audioPath)
