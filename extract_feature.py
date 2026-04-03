@@ -9,7 +9,6 @@ import torch.nn.functional as F
 
 import fairseq.data.dictionary
 import argparse
-import soundfile
 import torchaudio
 import os
 
@@ -72,8 +71,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     #convert audio to tensor
-    waveform, sample_rate = soundfile.read(args.audioPath)
-    audio = torch.tensor(waveform, dtype=torch.float32)
+    waveform, sample_rate = torchaudio.load(args.audioPath)
+    # resample to 16khz as required by yamnet
+    audio = waveform.Resample(16000, dtype=waveform.dtype)
     
     # get the name of file for recognition
     name = os.path.basename(args.audioPath)
