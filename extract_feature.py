@@ -9,7 +9,8 @@ import torch.nn.functional as F
 
 import fairseq.data.dictionary
 import argparse
-import torchaudio
+import soundfile
+import librosa
 import os
 
 torch.serialization.add_safe_globals([
@@ -71,9 +72,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     #convert audio to tensor
-    waveform, sample_rate = torchaudio.load(args.audioPath)
+    waveform, sample_rate = soundfile.read(args.audioPath)
+    waveform = torch.tensor(waveform)
     # resample to 16khz as required by yamnet
-    audio = waveform.Resample(16000, dtype=waveform.dtype)
+    if sample_rate != 16000:
+        audio = librosa.resample(waveform, orig_sr=sample_rate, target_sr=16000)
     
     # get the name of file for recognition
     name = os.path.basename(args.audioPath)
